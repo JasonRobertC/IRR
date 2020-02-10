@@ -1,0 +1,99 @@
+# v0.0 - non-working attempt
+# v0.1 - non-working attempt
+# v0.2 - non-working attempt 
+# v0.3 - first working version (uses Numpy add-in) 
+# v0.3n - re-wrote to avoid using the Numpy add-in 
+# v0.4 - rebuild to make the long-form code into functions (upStep & downStep) 
+# v0.5 - replace all repetitive statements in the IRR evaluation section with a funcion
+# v0.6 - addded error trapping on inputs
+# v0.7 - improved the initial input section (no longer requires user to pre-specify number of cash flows)
+
+print('\nInternal Rate of Return (IRR) Calculator v0.7') 
+print('By Jason R. Carroll\n')
+
+# build the list of cash flows from user input
+
+cf = []
+i = 1
+inputErrorMsg = ('\n---- Invalid entry, please try again.\n')
+
+while True:
+    try:
+        c0 = float(input('Enter initial investment (time-zero).\nInput as negative value: '))
+        cf.append(c0)
+        if c0 < 0:
+            break
+        print(inputErrorMsg)
+        cf = [] 
+    except ValueError:
+        print(inputErrorMsg)
+        cf = [] 
+
+print('\nEnter future cash flows (input blank line to finish).')
+
+while True:
+    try:
+        c = float(input('Cash Flow ' + str(i) + ': '))
+    except ValueError:
+        print('\nOK, ' + str(i) + ' total cash flows (including initial investment).')
+        break
+    cf.append(c)
+    i = i + 1
+    
+# define functions required for IRR evaluation 
+
+def message(result): 
+    print('Converging on answer... %.10f' % (result * 100) + '%.')
+
+def upStep(increment):
+    global r
+    pv = [] 
+    while True:
+        r = r + increment  
+        for i in range(len(cf)): 
+            pva = cf[i] / (( 1 + r ) ** i ) 
+            pv.append(pva) 
+        # print(pv)
+        # print(sum(pv))
+        if sum(pv) < 0:
+            break
+        pv = []
+
+def downStep(increment):
+    global r
+    pv = [] 
+    while True:
+        r = r - increment  
+        for i in range(len(cf)): 
+            pva = cf[i] / (( 1 + r ) ** i ) 
+            pv.append(pva) 
+        # print(pv)
+        # print(sum(pv))
+        if sum(pv) > 0:
+            break
+        pv = []
+
+# evaluate the IRR 
+
+print()
+r = 0
+upInc = 0.1
+dnInc = 0.01
+
+while True:
+    upStep(upInc) # "upward" pass 
+    message(r)
+    downStep(dnInc) # "downward" pass 
+    message(r)
+    upInc = upInc / 100
+    dnInc = dnInc / 100 
+    if dnInc <= 0.0000000000001: # stop when you get to the ten-trillionths place 
+        break
+
+# output the result 
+
+answer = round(r * 100, 12)
+print('\nFor the cash flows: ' + str(cf) + ' ...')
+print('... the IRR is ' + str(answer) + '%.') 
+print('\nHave a nice day.\n')
+input('[Press Enter to terminate program] ... ')
